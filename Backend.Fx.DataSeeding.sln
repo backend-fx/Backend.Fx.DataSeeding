@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Fx.DataSeeding", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Fx.DataSeeding.Feature", "src\Backend.Fx.DataSeeding.Feature\Backend.Fx.DataSeeding.Feature.csproj", "{A4ED2EB4-0B71-42EA-A832-1A557EAC6E9F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FD5B80A1-5173-41D0-B3AC-C09E917D659D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Fx.DataSeeding.Tests", "tests\Backend.Fx.DataSeeding.Tests\Backend.Fx.DataSeeding.Tests.csproj", "{8CD40C8C-333D-4C59-BA00-9231AF1F51C0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,5 +26,12 @@ Global
 		{A4ED2EB4-0B71-42EA-A832-1A557EAC6E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4ED2EB4-0B71-42EA-A832-1A557EAC6E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4ED2EB4-0B71-42EA-A832-1A557EAC6E9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CD40C8C-333D-4C59-BA00-9231AF1F51C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CD40C8C-333D-4C59-BA00-9231AF1F51C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CD40C8C-333D-4C59-BA00-9231AF1F51C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CD40C8C-333D-4C59-BA00-9231AF1F51C0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8CD40C8C-333D-4C59-BA00-9231AF1F51C0} = {FD5B80A1-5173-41D0-B3AC-C09E917D659D}
 	EndGlobalSection
 EndGlobal
