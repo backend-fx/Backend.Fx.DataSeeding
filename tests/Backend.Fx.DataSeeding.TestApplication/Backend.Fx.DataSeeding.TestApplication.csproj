@@ -5,6 +5,7 @@
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <LangVersion>12</LangVersion>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
     
     <ItemGroup>
