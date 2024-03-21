@@ -15,9 +15,16 @@ namespace Backend.Fx.DataSeeding.Feature;
 [PublicAPI]
 public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
 {
+    private readonly DataSeedingLevel _level;
+
+    public DataSeedingFeature(DataSeedingLevel level = DataSeedingLevel.Production)
+    {
+        _level = level;
+    }
+    
     public override void Enable(IBackendFxApplication application)
     {
-        application.CompositionRoot.RegisterModules(new DataSeedingModule(application.Assemblies));
+        application.CompositionRoot.RegisterModules(new DataSeedingModule(_level, application.Assemblies));
     }
 
     public virtual async Task BootAsync(IBackendFxApplication application, CancellationToken cancellationToken = default)
@@ -31,7 +38,8 @@ public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
     protected static async Task SeedData(IServiceProvider sp, CancellationToken ct)
     {
         var dataSeeders = sp.GetServices<IDataSeeder>();
-        var context = new DataSeedingContext(dataSeeders);
+        var dataSeeding = sp.GetRequiredService<IDataSeeding>();
+        var context = new DataSeedingContext(dataSeeding, dataSeeders);
         await context.SeedAllAsync(ct);
     }
 }

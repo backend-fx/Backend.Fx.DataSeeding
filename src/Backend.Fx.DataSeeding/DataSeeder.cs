@@ -16,9 +16,11 @@ public abstract class DataSeeder : IDataSeeder
 
     public IEnumerable<Type> DependsOn => _dependsOn;
 
+    public virtual DataSeedingLevel Level { get; } = DataSeedingLevel.Production;
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        if (await ShouldRun())
+        if (await ShouldRun(cancellationToken).ConfigureAwait(false))
         {
             _logger.LogInformation("{DataGeneratorTypeName} is now seeding data", GetType().FullName);
             await SeedDataAsync(cancellationToken).ConfigureAwait(false);
@@ -46,5 +48,5 @@ public abstract class DataSeeder : IDataSeeder
     /// since they're all executed on each application start
     /// </summary>
     /// <returns></returns>
-    protected abstract Task<bool> ShouldRun();
+    protected abstract Task<bool> ShouldRun(CancellationToken cancellationToken);
 }

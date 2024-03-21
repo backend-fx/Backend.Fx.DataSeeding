@@ -13,7 +13,7 @@ public abstract class TestSeeder(IList<Type> invocations) : DataSeeder
         return Task.CompletedTask;
     }
 
-    protected override Task<bool> ShouldRun()
+    protected override Task<bool> ShouldRun(CancellationToken cancellationToken)
     {
         return Task.FromResult(true);
     }
