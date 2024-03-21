@@ -35,6 +35,15 @@ public class DataSeedingContext
     {
         var dependencyGraph = new Dictionary<Type, HashSet<Type>>();
 
+        // Add all seeders to the graph
+        foreach (var seeder in _seeders)
+        {
+            if (!dependencyGraph.ContainsKey(seeder.GetType()))
+            {
+                dependencyGraph[seeder.GetType()] = new HashSet<Type>();
+            }
+        }
+        
         foreach (var seeder in _seeders)
         {
             foreach (var dependency in seeder.DependsOn)
