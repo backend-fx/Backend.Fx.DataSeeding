@@ -1,10 +1,10 @@
-namespace Backend.Fx.DataSeeding.Feature;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeedingContext
 {
@@ -31,7 +31,7 @@ public class DataSeedingContext
         }
     }
 
-    private Dictionary<Type, HashSet<Type>> BuildDependencyGraph()
+    public Dictionary<Type, HashSet<Type>> BuildDependencyGraph()
     {
         var dependencyGraph = new Dictionary<Type, HashSet<Type>>();
 
@@ -48,10 +48,61 @@ public class DataSeedingContext
             }
         }
 
+        // Detect cycles in the dependency graph
+        if (HasCycle(dependencyGraph))
+        {
+            throw new InvalidOperationException("Cycle detected in dependency graph. Unable to perform topological sorting.");
+        }
+
         return dependencyGraph;
     }
 
-    private IEnumerable<Type> TopologicalSort(Dictionary<Type, HashSet<Type>> dependencyGraph)
+    public bool HasCycle(Dictionary<Type, HashSet<Type>> dependencyGraph)
+    {
+        var visited = new HashSet<Type>();
+        var path = new HashSet<Type>();
+
+        foreach (var node in dependencyGraph.Keys)
+        {
+            if (HasCycleUtil(node, dependencyGraph, visited, path))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool HasCycleUtil(
+        Type node,
+        Dictionary<Type, HashSet<Type>> dependencyGraph,
+        HashSet<Type> visited,
+        HashSet<Type> path)
+    {
+        visited.Add(node);
+        path.Add(node);
+
+        if (dependencyGraph.TryGetValue(node, out var value))
+        {
+            foreach (var dependency in value)
+            {
+                if (!visited.Contains(dependency) && HasCycleUtil(dependency, dependencyGraph, visited, path))
+                {
+                    return true;
+                }
+                else if (path.Contains(dependency))
+                {
+                    return true; // Cycle detected
+                }
+            }
+        }
+
+        path.Remove(node);
+
+        return false;
+    }
+
+    public IEnumerable<Type> TopologicalSort(Dictionary<Type, HashSet<Type>> dependencyGraph)
     {
         var visited = new HashSet<Type>();
         var result = new List<Type>();
@@ -61,6 +112,9 @@ public class DataSeedingContext
             Visit(node, dependencyGraph, visited, result);
         }
 
+        // we need it reversed to start with the root
+        result.Reverse();
+        
         return result;
     }
 
