@@ -10,4 +10,6 @@ public interface IDataSeeder
     IEnumerable<Type> DependsOn { get; }
 
     Task SeedAsync(CancellationToken cancellationToken = default);
+
+    DataSeedingLevel Level { get; }
 }

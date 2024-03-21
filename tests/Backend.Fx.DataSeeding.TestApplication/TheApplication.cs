@@ -14,7 +14,8 @@ public class TheApplication : BackendFxApplication
 
     public Type[] GetInvocations() => _invocations.ToArray();
 
-    public TheApplication() : base(new SimpleInjectorCompositionRoot(),
+    public TheApplication() : base(
+        new SimpleInjectorCompositionRoot(),
         new DebugExceptionLogger(),
         typeof(TheApplication).Assembly)
     {

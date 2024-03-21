@@ -9,4 +9,6 @@ public class Dep1SeederB : TestSeeder
     {
         AddDependency<RootSeeder>();
     }
+    
+    public override DataSeedingLevel Level => DataSeedingLevel.Demonstration;
 }

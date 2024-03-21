@@ -8,10 +8,12 @@ namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeedingContext
 {
+    private readonly IDataSeeding _dataSeeding;
     private readonly IEnumerable<IDataSeeder> _seeders;
 
-    public DataSeedingContext(IEnumerable<IDataSeeder> seeders)
+    public DataSeedingContext(IDataSeeding dataSeeding, IEnumerable<IDataSeeder> seeders)
     {
+        _dataSeeding = dataSeeding;
         _seeders = seeders;
     }
 
@@ -27,7 +29,11 @@ public class DataSeedingContext
         foreach (var seederType in sortedSeeders)
         {
             var seeder = _seeders.First(s => s.GetType() == seederType);
-            await seeder.SeedAsync(cancellationToken);
+
+            if (seeder.Level >= _dataSeeding.Level)
+            {
+                await seeder.SeedAsync(cancellationToken);
+            }
         }
     }
 
@@ -43,7 +49,7 @@ public class DataSeedingContext
                 dependencyGraph[seeder.GetType()] = new HashSet<Type>();
             }
         }
-        
+
         foreach (var seeder in _seeders)
         {
             foreach (var dependency in seeder.DependsOn)
@@ -60,7 +66,8 @@ public class DataSeedingContext
         // Detect cycles in the dependency graph
         if (HasCycle(dependencyGraph))
         {
-            throw new InvalidOperationException("Cycle detected in dependency graph. Unable to perform topological sorting.");
+            throw new InvalidOperationException(
+                "Cycle detected in dependency graph. Unable to perform topological sorting.");
         }
 
         return dependencyGraph;
@@ -123,7 +130,7 @@ public class DataSeedingContext
 
         // we need it reversed to start with the root
         result.Reverse();
-        
+
         return result;
     }
 
