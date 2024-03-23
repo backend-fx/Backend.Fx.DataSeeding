@@ -32,7 +32,8 @@ public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
         await application.Invoker.InvokeAsync(
             async (sp, ct) => await SeedData(sp, ct),
             new SystemIdentity(),
-            cancellationToken);
+            cancellationToken,
+            allowInvocationDuringBoot: true);
     }
 
     protected static async Task SeedData(IServiceProvider sp, CancellationToken ct)
