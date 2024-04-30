@@ -1,156 +1,74 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Backend.Fx.Execution;
+using Backend.Fx.Execution.Pipeline;
+using Backend.Fx.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeedingContext
 {
-    private readonly IDataSeeding _dataSeeding;
-    private readonly IEnumerable<IDataSeeder> _seeders;
+    private readonly ILogger _logger = Log.Create<DataSeedingContext>();
+    private readonly IBackendFxApplication _application;
+    private readonly DataSeedingLevel _dataSeedingLevel;
 
-    public DataSeedingContext(IDataSeeding dataSeeding, IEnumerable<IDataSeeder> seeders)
+    public DataSeedingContext(IBackendFxApplication application, DataSeedingLevel dataSeedingLevel)
     {
-        _dataSeeding = dataSeeding;
-        _seeders = seeders;
+        _application = application;
+        _dataSeedingLevel = dataSeedingLevel;
     }
 
     public async Task SeedAllAsync(CancellationToken cancellationToken = default)
     {
-        // Build a dependency graph based on DependsOn property
-        Dictionary<Type, HashSet<Type>> dependencyGraph = BuildDependencyGraph();
-
-        // Topologically sort the seeders based on dependencies
-        var sortedSeeders = TopologicalSort(dependencyGraph);
+        var dependencyGraph = GetDataSeederDependencyGraph();
 
         // Execute SeedAsync on each seeder in order
-        foreach (var seederType in sortedSeeders)
+        foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
         {
-            var seeder = _seeders.First(s => s.GetType() == seederType);
-
-            if (seeder.Level >= _dataSeeding.Level)
-            {
-                await seeder.SeedAsync(cancellationToken);
-            }
+            await RunSeederInSeparateInvocationAsync(cancellationToken, seederType);
         }
     }
 
-    public Dictionary<Type, HashSet<Type>> BuildDependencyGraph()
+    private DataSeederDependencyGraph GetDataSeederDependencyGraph()
     {
-        var dependencyGraph = new Dictionary<Type, HashSet<Type>>();
-
-        // Add all seeders to the graph
-        foreach (var seeder in _seeders)
-        {
-            if (!dependencyGraph.ContainsKey(seeder.GetType()))
-            {
-                dependencyGraph[seeder.GetType()] = new HashSet<Type>();
-            }
-        }
-
-        foreach (var seeder in _seeders)
-        {
-            foreach (var dependency in seeder.DependsOn)
-            {
-                if (!dependencyGraph.ContainsKey(dependency))
-                {
-                    dependencyGraph[dependency] = new HashSet<Type>();
-                }
-
-                dependencyGraph[dependency].Add(seeder.GetType());
-            }
-        }
-
-        // Detect cycles in the dependency graph
-        if (HasCycle(dependencyGraph))
-        {
-            throw new InvalidOperationException(
-                "Cycle detected in dependency graph. Unable to perform topological sorting.");
-        }
-
+        // Build a dependency graph based on DependsOn property
+        using var scope = _application.CompositionRoot.BeginScope();
+        var dataSeeders = scope.ServiceProvider.GetServices<IDataSeeder>().ToArray();
+        var dependencyGraph = new DataSeederDependencyGraph(dataSeeders);
         return dependencyGraph;
     }
 
-    public bool HasCycle(Dictionary<Type, HashSet<Type>> dependencyGraph)
+    private async Task RunSeederInSeparateInvocationAsync(CancellationToken cancellationToken, Type seederType)
     {
-        var visited = new HashSet<Type>();
-        var path = new HashSet<Type>();
-
-        foreach (var node in dependencyGraph.Keys)
+        using (_logger.LogInformationDuration(
+                   $"Invoking seeder {seederType.Name}",
+                   $"Invoking seeder {seederType.Name} done."))
         {
-            if (HasCycleUtil(node, dependencyGraph, visited, path))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public bool HasCycleUtil(
-        Type node,
-        Dictionary<Type, HashSet<Type>> dependencyGraph,
-        HashSet<Type> visited,
-        HashSet<Type> path)
-    {
-        visited.Add(node);
-        path.Add(node);
-
-        if (dependencyGraph.TryGetValue(node, out var value))
-        {
-            foreach (var dependency in value)
-            {
-                if (!visited.Contains(dependency) && HasCycleUtil(dependency, dependencyGraph, visited, path))
+            await _application.Invoker.InvokeAsync(
+                async (sp, ct) =>
                 {
-                    return true;
-                }
-                else if (path.Contains(dependency))
-                {
-                    return true; // Cycle detected
-                }
-            }
-        }
-
-        path.Remove(node);
-
-        return false;
-    }
-
-    public IEnumerable<Type> TopologicalSort(Dictionary<Type, HashSet<Type>> dependencyGraph)
-    {
-        var visited = new HashSet<Type>();
-        var result = new List<Type>();
-
-        foreach (var node in dependencyGraph.Keys)
-        {
-            Visit(node, dependencyGraph, visited, result);
-        }
-
-        // we need it reversed to start with the root
-        result.Reverse();
-
-        return result;
-    }
-
-    private void Visit(
-        Type node,
-        Dictionary<Type, HashSet<Type>> dependencyGraph,
-        HashSet<Type> visited,
-        List<Type> result)
-    {
-        if (visited.Add(node))
-        {
-            if (dependencyGraph.TryGetValue(node, out var value))
-            {
-                foreach (var dependency in value)
-                {
-                    Visit(dependency, dependencyGraph, visited, result);
-                }
-            }
-
-            result.Add(node);
+                    var dataSeeders = sp.GetServices<IDataSeeder>().ToArray();
+                    var dataSeeder = dataSeeders.First(s => s.GetType() == seederType);
+                    if (dataSeeder.Level >= _dataSeedingLevel)
+                    {
+                        await dataSeeder.SeedAsync(ct);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "Skipping {SeederLevel} seeder {SeederType} because it is not active for level {Level}",
+                            dataSeeder.Level,
+                            seederType.Name,
+                            _dataSeedingLevel);
+                    }
+                },
+                new SystemIdentity(),
+                cancellationToken,
+                allowInvocationDuringBoot: true);
         }
     }
 }

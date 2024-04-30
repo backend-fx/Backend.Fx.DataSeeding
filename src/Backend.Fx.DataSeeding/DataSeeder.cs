@@ -16,7 +16,7 @@ public abstract class DataSeeder : IDataSeeder
 
     public IEnumerable<Type> DependsOn => _dependsOn;
 
-    public virtual DataSeedingLevel Level { get; } = DataSeedingLevel.Production;
+    public virtual DataSeedingLevel Level { get; } = DataSeedingLevel.Demonstration;
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
@@ -36,7 +36,7 @@ public abstract class DataSeeder : IDataSeeder
     {
         _dependsOn.Add(typeof(TDataSeeder));
     }
-    
+
     /// <summary>
     /// Implement your seeding logic here
     /// </summary>
@@ -44,7 +44,7 @@ public abstract class DataSeeder : IDataSeeder
     protected abstract Task SeedDataAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// return true, if the generator should be executed. Seeders must be implemented idempotent, 
+    /// return true, if the generator should be executed. Seeders must be implemented idempotent,
     /// since they're all executed on each application start
     /// </summary>
     /// <returns></returns>
