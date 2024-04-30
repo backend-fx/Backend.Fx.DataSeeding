@@ -60,9 +60,10 @@ public class DataSeedingContext
                     else
                     {
                         _logger.LogInformation(
-                            "Skipping seeder {SeederType} because it is not active for level {Level}",
+                            "Skipping {SeederLevel} seeder {SeederType} because it is not active for level {Level}",
+                            dataSeeder.Level,
                             seederType.Name,
-                            dataSeeder.Level);
+                            _dataSeedingLevel);
                     }
                 },
                 new SystemIdentity(),
