@@ -4,12 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Backend.Fx.Execution;
 using Backend.Fx.Execution.Pipeline;
+using Backend.Fx.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeedingContext
 {
+    private readonly ILogger _logger = Log.Create<DataSeedingContext>();
     private readonly IBackendFxApplication _application;
     private readonly DataSeedingLevel _dataSeedingLevel;
 
@@ -41,18 +44,30 @@ public class DataSeedingContext
 
     private async Task RunSeederInSeparateInvocationAsync(CancellationToken cancellationToken, Type seederType)
     {
-        await _application.Invoker.InvokeAsync(
-            async (sp, ct) =>
-            {
-                var dataSeeders = sp.GetServices<IDataSeeder>().ToArray();
-                var dataSeeder = dataSeeders.First(s => s.GetType() == seederType);
-                if (dataSeeder.Level >= _dataSeedingLevel)
+        using (_logger.LogInformationDuration(
+                   $"Invoking seeder {seederType.Name}",
+                   $"Invoking seeder {seederType.Name} done."))
+        {
+            await _application.Invoker.InvokeAsync(
+                async (sp, ct) =>
                 {
-                    await dataSeeder.SeedAsync(ct);
-                }
-            },
-            new SystemIdentity(),
-            cancellationToken,
-            allowInvocationDuringBoot: true);
+                    var dataSeeders = sp.GetServices<IDataSeeder>().ToArray();
+                    var dataSeeder = dataSeeders.First(s => s.GetType() == seederType);
+                    if (dataSeeder.Level >= _dataSeedingLevel)
+                    {
+                        await dataSeeder.SeedAsync(ct);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "Skipping seeder {SeederType} because it is not active for level {Level}",
+                            seederType.Name,
+                            dataSeeder.Level);
+                    }
+                },
+                new SystemIdentity(),
+                cancellationToken,
+                allowInvocationDuringBoot: true);
+        }
     }
 }

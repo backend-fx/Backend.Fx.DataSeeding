@@ -2,12 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Backend.Fx.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>>
 {
+    private readonly ILogger _logger = Log.Create<DataSeederDependencyGraph>();
     private readonly Dictionary<Type, HashSet<Type>> _dependencyGraph;
+    private string _cycle;
 
     public DataSeederDependencyGraph(IEnumerable<IDataSeeder> dataSeeders)
     {
@@ -16,7 +20,7 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
         if (HasCycle())
         {
             throw new InvalidOperationException(
-                "Cycle detected in data seeder dependencies. Please check the DependsOn properties of your seeders.");
+                $"Cycle detected in data seeder dependencies: {_cycle} Please check the DependsOn properties of your seeders.");
         }
     }
 
@@ -79,6 +83,8 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
             {
                 if (!visited.Contains(dependency) && HasCycleUtil(dependency, visited, path))
                 {
+                    _cycle = dependency.Name + " <- " + string.Join(" <- ", path.Select(t => t.Name));
+                    _logger.LogError("Cycle detected: {Cycle}", _cycle);
                     return true;
                 }
 

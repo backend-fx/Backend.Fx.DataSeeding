@@ -10,7 +10,7 @@ namespace Backend.Fx.DataSeeding.Feature;
 
 internal class DataSeedingModule : IModule
 {
-    private readonly ILogger _logger = Log.Create<DataSeedingModule>();
+    private static readonly ILogger Logger = Log.Create<DataSeedingModule>();
     private readonly Assembly[] _assemblies;
 
     public DataSeedingModule(params Assembly[] assemblies)
@@ -24,12 +24,15 @@ internal class DataSeedingModule : IModule
 
         if (dataSeeders.Any())
         {
-            var serviceDescriptors = dataSeeders.Select(t => new ServiceDescriptor(typeof(IDataSeeder), t, ServiceLifetime.Scoped));
+            var serviceDescriptors = dataSeeders
+                .Select(t => new ServiceDescriptor(typeof(IDataSeeder), t, ServiceLifetime.Scoped))
+                .ToArray();
             compositionRoot.RegisterCollection(serviceDescriptors);
+            Logger.LogInformation("{Count} data seeders registered", serviceDescriptors.Length);
         }
         else
         {
-            _logger.LogWarning("No data seeders found");
+            Logger.LogWarning("No data seeders found");
         }
     }
 }
