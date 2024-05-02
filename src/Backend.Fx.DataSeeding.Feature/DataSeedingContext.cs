@@ -12,7 +12,6 @@ namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeedingContext
 {
-    private static readonly IDataSeedingMutex Mutex = new DataSeedingMutex();
     private readonly ILogger _logger = Log.Create<DataSeedingContext>();
     private readonly IBackendFxApplication _application;
     private readonly DataSeedingLevel _dataSeedingLevel;
@@ -25,7 +24,8 @@ public class DataSeedingContext
 
     public async Task SeedAllAsync(CancellationToken cancellationToken = default)
     {
-        using (Mutex.Acquire())
+        var mutex = _application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
+        using (mutex.Acquire())
         {
             using (_application.UseSingleUserMode())
             {

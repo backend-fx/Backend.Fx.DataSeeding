@@ -8,7 +8,6 @@ using Xunit;
 
 namespace Backend.Fx.DataSeeding.Tests;
 
-[Collection("Data Seeding")]
 public class TheDataSeedingFeature : IDisposable
 {
     private readonly TheApplication _app = new();
