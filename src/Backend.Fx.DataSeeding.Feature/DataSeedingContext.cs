@@ -12,6 +12,7 @@ namespace Backend.Fx.DataSeeding.Feature;
 
 public class DataSeedingContext
 {
+    private static readonly IDataSeedingMutex Mutex = new DataSeedingMutex();
     private readonly ILogger _logger = Log.Create<DataSeedingContext>();
     private readonly IBackendFxApplication _application;
     private readonly DataSeedingLevel _dataSeedingLevel;
@@ -24,15 +25,17 @@ public class DataSeedingContext
 
     public async Task SeedAllAsync(CancellationToken cancellationToken = default)
     {
-        var mutex = _application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
-        using (mutex.Acquire())
+        using (Mutex.Acquire())
         {
-            var dependencyGraph = GetDataSeederDependencyGraph();
-
-            // Execute SeedAsync on each seeder in order
-            foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
+            using (_application.UseSingleUserMode())
             {
-                await RunSeederInSeparateInvocationAsync(cancellationToken, seederType);
+                var dependencyGraph = GetDataSeederDependencyGraph();
+
+                // Execute SeedAsync on each seeder in order
+                foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
+                {
+                    await RunSeederInSeparateInvocationAsync(cancellationToken, seederType);
+                }
             }
         }
     }
@@ -71,8 +74,7 @@ public class DataSeedingContext
                     }
                 },
                 new SystemIdentity(),
-                cancellationToken,
-                allowInvocationDuringBoot: true);
+                cancellationToken);
         }
     }
 }
