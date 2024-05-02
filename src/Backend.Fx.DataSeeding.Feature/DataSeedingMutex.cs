@@ -7,6 +7,8 @@ namespace Backend.Fx.DataSeeding.Feature;
 
 public interface IDataSeedingMutex: IDisposable
 {
+    bool IsAcquired { get; }
+
     IDisposable Acquire();
 }
 
@@ -14,11 +16,18 @@ public class DataSeedingMutex : IDataSeedingMutex
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
+    public bool IsAcquired { get; private set; }
+
     public IDisposable Acquire()
     {
         if (_semaphore.Wait(0))
         {
-            return new DelegateDisposable(() => _semaphore.Release());
+            IsAcquired = true;
+            return new DelegateDisposable(() =>
+            {
+                _semaphore.Release();
+                IsAcquired = false;
+            });
         }
 
         throw new ConflictedException("Data seeding is already running. Aborting.")
