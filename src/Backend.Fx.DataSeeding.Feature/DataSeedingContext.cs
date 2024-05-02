@@ -24,12 +24,16 @@ public class DataSeedingContext
 
     public async Task SeedAllAsync(CancellationToken cancellationToken = default)
     {
-        var dependencyGraph = GetDataSeederDependencyGraph();
-
-        // Execute SeedAsync on each seeder in order
-        foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
+        var mutex = _application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
+        using (mutex.Acquire())
         {
-            await RunSeederInSeparateInvocationAsync(cancellationToken, seederType);
+            var dependencyGraph = GetDataSeederDependencyGraph();
+
+            // Execute SeedAsync on each seeder in order
+            foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
+            {
+                await RunSeederInSeparateInvocationAsync(cancellationToken, seederType);
+            }
         }
     }
 

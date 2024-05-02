@@ -20,6 +20,8 @@ internal class DataSeedingModule : IModule
 
     public void Register(ICompositionRoot compositionRoot)
     {
+        compositionRoot.Register(ServiceDescriptor.Singleton<IDataSeedingMutex, DataSeedingMutex>());
+
         var dataSeeders = _assemblies.GetImplementingTypes(typeof(IDataSeeder)).ToArray();
 
         if (dataSeeders.Any())
