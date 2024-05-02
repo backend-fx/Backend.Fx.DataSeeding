@@ -7,9 +7,9 @@
         <LangVersion>12</LangVersion>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="Backend.Fx.Execution" Version="1.0.10" />
+        <PackageReference Include="Backend.Fx.Execution" Version="1.0.11-pullrequest0011-0004" />
         <PackageReference Include="Backend.Fx.Execution.SimpleInjector" Version="1.0.0" />
     </ItemGroup>
 

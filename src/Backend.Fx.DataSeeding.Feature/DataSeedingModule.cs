@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Reflection;
 using Backend.Fx.Execution.DependencyInjection;
+using Backend.Fx.Execution.Pipeline;
 using Backend.Fx.Logging;
 using Backend.Fx.Util;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,8 @@ internal class DataSeedingModule : IModule
 
     public void Register(ICompositionRoot compositionRoot)
     {
+        compositionRoot.Register(ServiceDescriptor.Singleton<IDataSeedingMutex, DataSeedingMutex>());
+
         var dataSeeders = _assemblies.GetImplementingTypes(typeof(IDataSeeder)).ToArray();
 
         if (dataSeeders.Any())
