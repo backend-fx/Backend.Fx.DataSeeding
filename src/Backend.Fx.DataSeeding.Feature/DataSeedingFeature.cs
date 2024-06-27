@@ -17,16 +17,18 @@ public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
     private static readonly ILogger Logger = Log.Create<DataSeedingFeature>();
 
     private readonly DataSeedingLevel _level;
+    private readonly IDataSeedingMutex _mutex;
 
-    public DataSeedingFeature(DataSeedingLevel level = DataSeedingLevel.Production)
+    public DataSeedingFeature(DataSeedingLevel level = DataSeedingLevel.Production, IDataSeedingMutex mutex = null)
     {
         _level = level;
+        _mutex = mutex ?? new DataSeedingMutex();
     }
 
     public override void Enable(IBackendFxApplication application)
     {
         Logger.LogInformation("Enabling data seeding for the {ApplicationName}", application.GetType().Name);
-        application.CompositionRoot.RegisterModules(new DataSeedingModule(application.Assemblies));
+        application.CompositionRoot.RegisterModules(new DataSeedingModule(_mutex, application.Assemblies));
     }
 
     public virtual async Task BootAsync(
