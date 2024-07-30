@@ -22,13 +22,13 @@ public abstract class DataSeeder : IDataSeeder
     {
         if (await ShouldRun(cancellationToken).ConfigureAwait(false))
         {
-            _logger.LogInformation("{DataGeneratorTypeName} is now seeding data", GetType().FullName);
+            _logger.LogInformation("{DataSeederTypeName} is now seeding data", GetType().FullName);
             await SeedDataAsync(cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("{DataGeneratorTypeName} completed data seeding", GetType().FullName);
+            _logger.LogInformation("{DataSeederTypeName} completed data seeding", GetType().FullName);
         }
         else
         {
-            _logger.LogInformation("No need to run {DataGeneratorTypeName}", GetType().FullName);
+            _logger.LogInformation("No need to run {DataSeederTypeName}", GetType().FullName);
         }
     }
 

@@ -5,7 +5,7 @@ using Backend.Fx.Util;
 
 namespace Backend.Fx.DataSeeding.Feature;
 
-public interface IDataSeedingMutex: IDisposable
+public interface IDataSeedingMutex : IDisposable
 {
     bool IsAcquired { get; }
 
