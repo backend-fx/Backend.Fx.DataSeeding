@@ -14,20 +14,25 @@ namespace Backend.Fx.DataSeeding.Feature;
 [PublicAPI]
 public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
 {
-    private static readonly ILogger Logger = Log.Create<DataSeedingFeature>();
-
-    private readonly DataSeedingLevel _level;
+    private readonly ILogger _logger = Log.Create<DataSeedingFeature>();
+    private readonly IDataSeedingContext _dataSeedingContext;
     private readonly IDataSeedingMutex _mutex;
 
-    public DataSeedingFeature(DataSeedingLevel level = DataSeedingLevel.Production, IDataSeedingMutex mutex = null)
+    public DataSeedingFeature(DataSeedingLevel level = DataSeedingLevel.Production, IDataSeedingMutex? mutex = null)
     {
-        _level = level;
+        _dataSeedingContext = new DefaultDataSeedingContext(level);
+        _mutex = mutex ?? new DataSeedingMutex();
+    }
+    
+    public DataSeedingFeature(IDataSeedingContext dataSeedingContext, IDataSeedingMutex? mutex = null)
+    {
+        _dataSeedingContext = dataSeedingContext;
         _mutex = mutex ?? new DataSeedingMutex();
     }
 
     public override void Enable(IBackendFxApplication application)
     {
-        Logger.LogInformation("Enabling data seeding for the {ApplicationName}", application.GetType().Name);
+        _logger.LogInformation("Enabling data seeding for the {ApplicationName}", application.GetType().Name);
         application.CompositionRoot.RegisterModules(new DataSeedingModule(_mutex, application.Assemblies));
     }
 
@@ -35,9 +40,11 @@ public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
         IBackendFxApplication application,
         CancellationToken cancellationToken = default)
     {
-        var context = new DataSeedingContext(application, _level);
-        Logger.LogInformation(
-            "{ApplicationName} is now seeding data on level {Level}", application.GetType().Name, _level);
-        await context.SeedAllAsync(cancellationToken);
+        _logger.LogInformation(
+            "{ApplicationName} is now seeding data on level {Level}", 
+            application.GetType().Name, 
+            _dataSeedingContext.Level);
+        
+        await _dataSeedingContext.SeedAllAsync(application, cancellationToken);
     }
 }

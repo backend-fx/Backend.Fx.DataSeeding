@@ -3,78 +3,59 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Fx.Execution;
-using Backend.Fx.Execution.Pipeline;
 using Backend.Fx.Logging;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Backend.Fx.DataSeeding.Feature;
 
-public class DataSeedingContext
+[PublicAPI]
+public abstract class DataSeedingContext : IDataSeedingContext
 {
     private readonly ILogger _logger = Log.Create<DataSeedingContext>();
-    private readonly IBackendFxApplication _application;
-    private readonly DataSeedingLevel _dataSeedingLevel;
 
-    public DataSeedingContext(IBackendFxApplication application, DataSeedingLevel dataSeedingLevel)
+    protected DataSeedingContext(DataSeedingLevel level)
     {
-        _application = application;
-        _dataSeedingLevel = dataSeedingLevel;
+        Level = level;
     }
 
-    public async Task SeedAllAsync(CancellationToken cancellationToken = default)
+    public async Task SeedAllAsync(IBackendFxApplication application, CancellationToken cancellationToken = default)
     {
-        var mutex = _application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
+        var mutex = application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
         using (mutex.Acquire())
         {
-            using (_application.UseSingleUserMode())
+            using (application.UseSingleUserMode())
             {
-                var dependencyGraph = GetDataSeederDependencyGraph();
+                var dependencyGraph = GetDataSeederDependencyGraph(application);
 
                 // Execute SeedAsync on each seeder in order
                 foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
                 {
-                    await RunSeederInSeparateInvocationAsync(cancellationToken, seederType);
+                    using (_logger.LogInformationDuration(
+                               $"Invoking seeder {seederType.Name}",
+                               $"Invoking seeder {seederType.Name} done."))
+                    {
+                        await RunSeederInSeparateInvocationAsync(application, seederType, cancellationToken);
+                    }
                 }
             }
         }
     }
 
-    private DataSeederDependencyGraph GetDataSeederDependencyGraph()
+    protected abstract Task RunSeederInSeparateInvocationAsync(
+        IBackendFxApplication application,
+        Type seederType,
+        CancellationToken cancellationToken);
+
+    public DataSeedingLevel Level { get; }
+
+    private DataSeederDependencyGraph GetDataSeederDependencyGraph(IBackendFxApplication application)
     {
         // Build a dependency graph based on DependsOn property
-        using var scope = _application.CompositionRoot.BeginScope();
+        using var scope = application.CompositionRoot.BeginScope();
         var dataSeeders = scope.ServiceProvider.GetServices<IDataSeeder>().ToArray();
         var dependencyGraph = new DataSeederDependencyGraph(dataSeeders);
         return dependencyGraph;
-    }
-
-    private async Task RunSeederInSeparateInvocationAsync(CancellationToken cancellationToken, Type seederType)
-    {
-        using (_logger.LogInformationDuration(
-                   $"Invoking seeder {seederType.Name}",
-                   $"Invoking seeder {seederType.Name} done."))
-        {
-            await _application.Invoker.InvokeAsync(
-                async (sp, ct) =>
-                {
-                    var dataSeeders = sp.GetServices<IDataSeeder>().ToArray();
-                    var dataSeeder = dataSeeders.First(s => s.GetType() == seederType);
-                    if (dataSeeder.Level >= _dataSeedingLevel)
-                    {
-                        await dataSeeder.SeedAsync(ct);
-                    }
-                    else
-                    {
-                        _logger.LogInformation(
-                            "Skipping {SeederLevel} seeder {SeederType} because it is not active for level {Level}",
-                            dataSeeder.Level,
-                            seederType.Name,
-                            _dataSeedingLevel);
-                    }
-                },
-                new SystemIdentity(),
-                cancellationToken);
-        }
     }
 }
