@@ -40,11 +40,7 @@ public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
         IBackendFxApplication application,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation(
-            "{ApplicationName} is now seeding data on level {Level}", 
-            application.GetType().Name, 
-            _dataSeedingContext.Level);
-        
+        _logger.LogInformation("{ApplicationName} is now seeding data", application.GetType().Name);
         await _dataSeedingContext.SeedAllAsync(application, cancellationToken);
     }
 }
