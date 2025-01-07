@@ -15,11 +15,6 @@ public abstract class DataSeedingContext : IDataSeedingContext
 {
     private readonly ILogger _logger = Log.Create<DataSeedingContext>();
 
-    protected DataSeedingContext(DataSeedingLevel level)
-    {
-        Level = level;
-    }
-
     public async Task SeedAllAsync(IBackendFxApplication application, CancellationToken cancellationToken = default)
     {
         var mutex = application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
@@ -29,7 +24,6 @@ public abstract class DataSeedingContext : IDataSeedingContext
             {
                 var dependencyGraph = GetDataSeederDependencyGraph(application);
 
-                // Execute SeedAsync on each seeder in order
                 foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
                 {
                     using (_logger.LogInformationDuration(
@@ -48,7 +42,28 @@ public abstract class DataSeedingContext : IDataSeedingContext
         Type seederType,
         CancellationToken cancellationToken);
 
-    public DataSeedingLevel Level { get; }
+    protected async Task InvokeSeeder(
+        Type seederType,
+        IServiceProvider sp,
+        DataSeedingLevel seedingLevel,
+        CancellationToken ct)
+    {
+        var dataSeeders = sp.GetServices<IDataSeeder>().ToArray();
+        var dataSeeder = dataSeeders.First(s => s.GetType() == seederType);
+        if (dataSeeder.Level >= seedingLevel)
+        {
+            _logger.LogInformation("Invoking {SeederLevel} seeder {SeederType}", seedingLevel, seederType.Name);
+            await dataSeeder.SeedAsync(ct);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Skipping {SeederLevel} seeder {SeederType} because it is not active for level {Level}",
+                dataSeeder.Level,
+                seederType.Name,
+                seedingLevel);
+        }
+    }
 
     private DataSeederDependencyGraph GetDataSeederDependencyGraph(IBackendFxApplication application)
     {
