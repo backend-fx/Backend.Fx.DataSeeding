@@ -12,7 +12,7 @@ namespace Backend.Fx.DataSeeding.Feature;
 /// The feature "Data Seeding" makes sure that all implemented data seeders are executed on application boot
 /// </summary>
 [PublicAPI]
-public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
+public class DataSeedingFeature : IFeature, IBootableFeature
 {
     private readonly ILogger _logger = Log.Create<DataSeedingFeature>();
     private readonly IDataSeedingContext _dataSeedingContext;
@@ -30,7 +30,7 @@ public class DataSeedingFeature : Execution.Features.Feature, IBootableFeature
         _mutex = mutex ?? new DataSeedingMutex();
     }
 
-    public override void Enable(IBackendFxApplication application)
+    public void Enable(IBackendFxApplication application)
     {
         _logger.LogInformation("Enabling data seeding for the {ApplicationName}", application.GetType().Name);
         application.CompositionRoot.RegisterModules(new DataSeedingModule(_mutex, application.Assemblies));
