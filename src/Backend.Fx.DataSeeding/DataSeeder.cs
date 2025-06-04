@@ -36,6 +36,27 @@ public abstract class DataSeeder : IDataSeeder
     {
         _dependsOn.Add(typeof(TDataSeeder));
     }
+    
+    protected void AddDependency(string dataSeederType)
+    {
+        if (string.IsNullOrWhiteSpace(dataSeederType))
+        {
+            throw new ArgumentException("Data seeder type cannot be null or whitespace.", nameof(dataSeederType));
+        }
+
+        var type = Type.GetType(dataSeederType, false);
+        if (type == null)
+        {
+            throw new InvalidOperationException($"{GetType().Name} depends on {dataSeederType} but this type could not be found");
+        }
+
+        if (!typeof(IDataSeeder).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException($"{GetType().Name} depends on {dataSeederType} but this type is not an IDataSeeder");
+        }
+
+        _dependsOn.Add(type);
+    }
 
     /// <summary>
     /// Implement your seeding logic here
