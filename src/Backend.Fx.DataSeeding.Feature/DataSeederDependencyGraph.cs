@@ -11,7 +11,7 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
 {
     private readonly ILogger _logger = Log.Create<DataSeederDependencyGraph>();
     private readonly Dictionary<Type, HashSet<Type>> _dependencyGraph;
-    private string _cycle;
+    private string _cycle = string.Empty;
 
     public DataSeederDependencyGraph(IEnumerable<IDataSeeder> dataSeeders)
     {
@@ -83,7 +83,7 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
             {
                 if (!visited.Contains(dependency) && HasCycleUtil(dependency, visited, path))
                 {
-                    _cycle = dependency.Name + " <- " + string.Join(" <- ", path.Select(t => t.Name));
+                    _cycle += dependency.Name + " <- " + string.Join(" <- ", path.Select(t => t.Name));
                     _logger.LogError("Cycle detected: {Cycle}", _cycle);
                     return true;
                 }

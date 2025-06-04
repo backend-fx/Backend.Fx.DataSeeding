@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Backend.Fx.Execution.SimpleInjector" Version="1.1.3" />
+        <PackageReference Include="Backend.Fx.Execution.SimpleInjector" Version="1.1.4" />
     </ItemGroup>
 
     <ItemGroup>
