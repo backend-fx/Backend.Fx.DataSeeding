@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Fx.Execution;
@@ -23,7 +26,7 @@ public class DataSeedingFeature : IFeature, IBootableFeature
         _dataSeedingContext = new DefaultDataSeedingContext(level);
         _mutex = mutex ?? new DataSeedingMutex();
     }
-    
+
     public DataSeedingFeature(IDataSeedingContext dataSeedingContext, IDataSeedingMutex? mutex = null)
     {
         _dataSeedingContext = dataSeedingContext;
@@ -35,6 +38,8 @@ public class DataSeedingFeature : IFeature, IBootableFeature
         _logger.LogInformation("Enabling data seeding for the {ApplicationName}", application.GetType().Name);
         application.CompositionRoot.RegisterModules(new DataSeedingModule(_mutex, application.Assemblies));
     }
+
+    public IEnumerable<Assembly> Assemblies => Array.Empty<Assembly>();
 
     public virtual async Task BootAsync(
         IBackendFxApplication application,

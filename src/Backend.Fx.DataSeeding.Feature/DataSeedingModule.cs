@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Backend.Fx.Execution.DependencyInjection;
@@ -12,9 +13,9 @@ internal class DataSeedingModule : IModule
 {
     private static readonly ILogger Logger = Log.Create<DataSeedingModule>();
     private readonly IDataSeedingMutex _mutex;
-    private readonly Assembly[] _assemblies;
+    private readonly IEnumerable<Assembly> _assemblies;
 
-    public DataSeedingModule(IDataSeedingMutex mutex, params Assembly[] assemblies)
+    public DataSeedingModule(IDataSeedingMutex mutex, IEnumerable<Assembly> assemblies)
     {
         _mutex = mutex;
         _assemblies = assemblies;
