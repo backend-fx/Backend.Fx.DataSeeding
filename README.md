@@ -43,7 +43,7 @@ public class DepartmentSeeder : DataSeeder
 {
     private readonly IDepartmentRepository _departmenRepository;
     
-    public CostCenterSeeder(
+    public DepartmentSeeder(
         IOrganizationalUnitRepository organizationalUnitRepository,
         IDepartmentRepository departmenRepository)
     {
