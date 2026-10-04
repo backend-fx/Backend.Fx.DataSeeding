@@ -10,5 +10,5 @@ public class Dep1SeederB : TestSeeder
         AddDependency("Backend.Fx.DataSeeding.TestApplication.RootSeeder, Backend.Fx.DataSeeding.TestApplication");
     }
     
-    public override DataSeedingLevel Level => DataSeedingLevel.Demonstration;
+    public override DataSeedingLevel Level => DataSeedingLevel.Development;
 }

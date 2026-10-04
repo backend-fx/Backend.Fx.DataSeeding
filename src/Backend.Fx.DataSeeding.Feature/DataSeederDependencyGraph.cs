@@ -1,7 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Backend.Fx.Logging;
 using Microsoft.Extensions.Logging;
 
@@ -11,16 +8,52 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
 {
     private readonly ILogger _logger = Log.Create<DataSeederDependencyGraph>();
     private readonly Dictionary<Type, HashSet<Type>> _dependencyGraph;
-    private string _cycle = string.Empty;
 
     public DataSeederDependencyGraph(IEnumerable<IDataSeeder> dataSeeders)
     {
-        _dependencyGraph = Build(dataSeeders.ToArray());
+        var seeders = dataSeeders.ToArray();
 
-        if (HasCycle())
+        ValidateDependencies(seeders);
+
+        _dependencyGraph = Build(seeders);
+
+        if (TryFindCycle(out var cycle))
         {
             throw new InvalidOperationException(
-                $"Cycle detected in data seeder dependencies: {_cycle} Please check the DependsOn properties of your seeders.");
+                $"Cycle detected in data seeder dependencies: {cycle}. Please check the DependsOn properties of your seeders.");
+        }
+    }
+
+    private static void ValidateDependencies(IDataSeeder[] seeders)
+    {
+        var seedersByType = new Dictionary<Type, IDataSeeder>();
+        foreach (var seeder in seeders)
+        {
+            seedersByType[seeder.GetType()] = seeder;
+        }
+
+        foreach (var seeder in seeders)
+        {
+            foreach (var dependency in seeder.DependsOn)
+            {
+                if (!seedersByType.TryGetValue(dependency, out var dependencySeeder))
+                {
+                    throw new InvalidOperationException(
+                        $"{seeder.GetType().Name} depends on {dependency.Name}, but no such data seeder is registered.");
+                }
+
+                // A dependency must run at least as often as its dependent. A seeder runs when its
+                // Level is greater than or equal to the application's seeding level, so the dependency's
+                // Level must be greater than or equal to the dependent's Level. Otherwise the dependency
+                // would be silently skipped while the dependent runs, leaving the data inconsistent.
+                if (dependencySeeder.Level < seeder.Level)
+                {
+                    throw new InvalidOperationException(
+                        $"{seeder.GetType().Name} (level {seeder.Level}) depends on {dependency.Name} " +
+                        $"(level {dependencySeeder.Level}), but a dependency must run at least as often as its " +
+                        $"dependent. Raise the level of {dependency.Name} to at least {seeder.Level}.");
+                }
+            }
         }
     }
 
@@ -53,15 +86,18 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
         return dependencyGraph;
     }
 
-    private bool HasCycle()
+    private bool TryFindCycle(out string cycle)
     {
+        cycle = string.Empty;
         var visited = new HashSet<Type>();
-        var path = new HashSet<Type>();
+        var stack = new List<Type>();
+        var inStack = new HashSet<Type>();
 
         foreach (var node in Keys)
         {
-            if (HasCycleUtil(node, visited, path))
+            if (!visited.Contains(node) && TryFindCycle(node, visited, stack, inStack, out cycle))
             {
+                _logger.LogError("Cycle detected: {Cycle}", cycle);
                 return true;
             }
         }
@@ -69,34 +105,38 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
         return false;
     }
 
-    private bool HasCycleUtil(
+    private bool TryFindCycle(
         Type node,
         HashSet<Type> visited,
-        HashSet<Type> path)
+        List<Type> stack,
+        HashSet<Type> inStack,
+        out string cycle)
     {
+        cycle = string.Empty;
         visited.Add(node);
-        path.Add(node);
+        stack.Add(node);
+        inStack.Add(node);
 
-        if (TryGetValue(node, out var value))
+        if (TryGetValue(node, out var dependents))
         {
-            foreach (var dependency in value)
+            foreach (var dependent in dependents)
             {
-                if (!visited.Contains(dependency) && HasCycleUtil(dependency, visited, path))
+                if (inStack.Contains(dependent))
                 {
-                    _cycle += dependency.Name + " <- " + string.Join(" <- ", path.Select(t => t.Name));
-                    _logger.LogError("Cycle detected: {Cycle}", _cycle);
+                    var startIndex = stack.IndexOf(dependent);
+                    cycle = string.Join(" -> ", stack.Skip(startIndex).Append(dependent).Select(t => t.Name));
                     return true;
                 }
 
-                if (path.Contains(dependency))
+                if (!visited.Contains(dependent) && TryFindCycle(dependent, visited, stack, inStack, out cycle))
                 {
-                    return true; // Cycle detected
+                    return true;
                 }
             }
         }
 
-        path.Remove(node);
-
+        stack.RemoveAt(stack.Count - 1);
+        inStack.Remove(node);
         return false;
     }
 

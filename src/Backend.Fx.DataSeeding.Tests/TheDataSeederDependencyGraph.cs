@@ -47,6 +47,51 @@ public class TheDataSeederDependencyGraph
     }
 
     [Fact]
+    public void ThrowsWhenDependencyIsNotRegistered()
+    {
+        var invocations = new List<Type>();
+
+        var exception = Record.Exception(() => new DataSeederDependencyGraph(
+            new IDataSeeder[]
+            {
+                new DependsOnUnregisteredSeeder(invocations),
+            }));
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Contains(nameof(IsolatedSeeder1), exception!.Message);
+    }
+
+    [Fact]
+    public void ThrowsWhenDependencyRunsLessOftenThanDependent()
+    {
+        var invocations = new List<Type>();
+
+        var exception = Record.Exception(() => new DataSeederDependencyGraph(
+            new IDataSeeder[]
+            {
+                new ProductionDependent(invocations),
+                new DemonstrationDependency(invocations),
+            }));
+
+        Assert.IsType<InvalidOperationException>(exception);
+    }
+
+    [Fact]
+    public void AllowsDependencyThatRunsAtLeastAsOftenAsDependent()
+    {
+        var invocations = new List<Type>();
+
+        var exception = Record.Exception(() => new DataSeederDependencyGraph(
+            new IDataSeeder[]
+            {
+                new DemonstrationDependent(invocations),
+                new ProductionDependency(invocations),
+            }));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
     public void DoesntSwallowIsolatedSeeder()
     {
         var invocations = new List<Type>();
@@ -78,6 +123,44 @@ public class TheDataSeederDependencyGraph
     private class IsolatedSeeder1(IList<Type> invocations) : TestSeeder(invocations);
 
     private class IsolatedSeeder2(IList<Type> invocations) : TestSeeder(invocations);
+
+    private class DependsOnUnregisteredSeeder : TestSeeder
+    {
+        public DependsOnUnregisteredSeeder(IList<Type> invocations) : base(invocations)
+        {
+            AddDependency<IsolatedSeeder1>();
+        }
+    }
+
+    private class DemonstrationDependency(IList<Type> invocations) : TestSeeder(invocations)
+    {
+        public override DataSeedingLevel Level => DataSeedingLevel.Demonstration;
+    }
+
+    private class ProductionDependent : TestSeeder
+    {
+        public ProductionDependent(IList<Type> invocations) : base(invocations)
+        {
+            AddDependency<DemonstrationDependency>();
+        }
+
+        public override DataSeedingLevel Level => DataSeedingLevel.Production;
+    }
+
+    private class ProductionDependency(IList<Type> invocations) : TestSeeder(invocations)
+    {
+        public override DataSeedingLevel Level => DataSeedingLevel.Production;
+    }
+
+    private class DemonstrationDependent : TestSeeder
+    {
+        public DemonstrationDependent(IList<Type> invocations) : base(invocations)
+        {
+            AddDependency<ProductionDependency>();
+        }
+
+        public override DataSeedingLevel Level => DataSeedingLevel.Demonstration;
+    }
 
     private class CyclicSeeder1 : TestSeeder
     {
