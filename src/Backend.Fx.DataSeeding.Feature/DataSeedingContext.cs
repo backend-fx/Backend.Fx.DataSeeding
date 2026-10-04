@@ -44,8 +44,7 @@ public abstract class DataSeedingContext : IDataSeedingContext
         DataSeedingLevel seedingLevel,
         CancellationToken ct)
     {
-        var dataSeeders = sp.GetServices<IDataSeeder>().ToArray();
-        var dataSeeder = dataSeeders.First(s => s.GetType() == seederType);
+        var dataSeeder = (IDataSeeder)sp.GetRequiredService(seederType);
         if (dataSeeder.Level >= seedingLevel)
         {
             _logger.LogInformation("Invoking {SeederLevel} seeder {SeederType}", seedingLevel, seederType.Name);
