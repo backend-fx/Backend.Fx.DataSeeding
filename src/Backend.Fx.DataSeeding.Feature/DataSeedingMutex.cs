@@ -1,7 +1,9 @@
 using Backend.Fx.Exceptions;
+using JetBrains.Annotations;
 
 namespace Backend.Fx.DataSeeding.Feature;
 
+[PublicAPI]
 public interface IDataSeedingMutex : IDisposable
 {
     bool IsAcquired { get; }
