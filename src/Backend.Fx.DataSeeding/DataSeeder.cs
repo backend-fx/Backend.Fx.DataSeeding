@@ -7,12 +7,17 @@ namespace Backend.Fx.DataSeeding;
 [PublicAPI]
 public abstract class DataSeeder : IDataSeeder
 {
-    private readonly ILogger _logger = Log.Create<DataSeeder>();
+    private readonly ILogger _logger;
     private readonly List<Type> _dependsOn = new();
 
     public IEnumerable<Type> DependsOn => _dependsOn;
 
     public virtual DataSeedingLevel Level { get; } = DataSeedingLevel.Demonstration;
+
+    protected DataSeeder()
+    {
+        _logger = Log.Create(GetType());
+    }
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
