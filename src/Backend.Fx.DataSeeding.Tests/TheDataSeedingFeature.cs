@@ -16,7 +16,7 @@ public class TheDataSeedingFeature : IDisposable
     public async Task CallsAllSeedersOnBootThatMatchTheSeedingModeDemonstration()
     {
         _app.EnableFeature(new DataSeedingFeature(DataSeedingLevel.Demonstration));
-        await _app.BootAsync();
+        await _app.BootAsync(TestContext.Current.CancellationToken);
 
         // sanity check
         Assert.NotEmpty(_app.GetInvocations());
@@ -37,7 +37,7 @@ public class TheDataSeedingFeature : IDisposable
     public async Task CallsAllSeedersOnBootThatMatchTheSeedingModeDevelopment()
     {
         _app.EnableFeature(new DataSeedingFeature(DataSeedingLevel.Development));
-        await _app.BootAsync();
+        await _app.BootAsync(TestContext.Current.CancellationToken);
 
         // sanity check
         Assert.NotEmpty(_app.GetInvocations());
@@ -72,7 +72,7 @@ public class TheDataSeedingFeature : IDisposable
     public async Task CallsAllSeedersOnBootThatMatchTheSeedingModeProduction()
     {
         _app.EnableFeature(new DataSeedingFeature());
-        await _app.BootAsync();
+        await _app.BootAsync(TestContext.Current.CancellationToken);
 
         // sanity check
         Assert.NotEmpty(_app.GetInvocations());
