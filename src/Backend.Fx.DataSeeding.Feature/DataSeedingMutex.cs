@@ -1,5 +1,3 @@
-using System;
-using System.Threading;
 using Backend.Fx.Exceptions;
 using Backend.Fx.Util;
 

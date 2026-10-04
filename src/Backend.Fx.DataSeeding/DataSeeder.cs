@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Fx.Logging;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
