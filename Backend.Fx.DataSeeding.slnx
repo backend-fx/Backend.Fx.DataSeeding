@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Backend.Fx.DataSeeding.Feature/Backend.Fx.DataSeeding.Feature.csproj" />
+  <Project Path="src/Backend.Fx.DataSeeding.TestApplication/Backend.Fx.DataSeeding.TestApplication.csproj" />
+  <Project Path="src/Backend.Fx.DataSeeding.Tests/Backend.Fx.DataSeeding.Tests.csproj" />
+  <Project Path="src/Backend.Fx.DataSeeding/Backend.Fx.DataSeeding.csproj" />
+</Solution>
