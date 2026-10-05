@@ -1,23 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings>true</ImplicitUsings>
+    <IncludeSymbols>true</IncludeSymbols>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <ImplicitUsings>true</ImplicitUsings>
-        <IncludeSymbols>true</IncludeSymbols>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Backend.Fx.Execution" Version="1.1.11" />
+    <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" PrivateAssets="All" />
+    <PackageReference
+      Include="Microsoft.SourceLink.GitHub"
+      Version="10.0.401"
+      PrivateAssets="All"
+    />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Backend.Fx.Execution" Version="1.1.11" />
-        <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" PrivateAssets="All"/>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401" PrivateAssets="All" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Backend.Fx.DataSeeding\Backend.Fx.DataSeeding.csproj" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\Backend.Fx.DataSeeding\Backend.Fx.DataSeeding.csproj" />
+  </ItemGroup>
 </Project>

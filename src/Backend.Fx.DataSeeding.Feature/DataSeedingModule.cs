@@ -34,7 +34,9 @@ internal class DataSeedingModule : IModule
 
             foreach (var dataSeederType in dataSeeders)
             {
-                compositionRoot.Register(new ServiceDescriptor(dataSeederType, dataSeederType, ServiceLifetime.Scoped));
+                compositionRoot.Register(
+                    new ServiceDescriptor(dataSeederType, dataSeederType, ServiceLifetime.Scoped)
+                );
             }
 
             Logger.LogInformation("{Count} data seeders registered", serviceDescriptors.Length);

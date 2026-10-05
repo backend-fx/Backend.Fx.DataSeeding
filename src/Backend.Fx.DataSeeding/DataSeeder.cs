@@ -25,7 +25,10 @@ public abstract class DataSeeder : IDataSeeder
         {
             _logger.LogInformation("{DataSeederTypeName} is now seeding data", GetType().FullName);
             await SeedDataAsync(cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("{DataSeederTypeName} completed data seeding", GetType().FullName);
+            _logger.LogInformation(
+                "{DataSeederTypeName} completed data seeding",
+                GetType().FullName
+            );
         }
         else
         {
@@ -33,27 +36,35 @@ public abstract class DataSeeder : IDataSeeder
         }
     }
 
-    protected void AddDependency<TDataSeeder>() where TDataSeeder : IDataSeeder
+    protected void AddDependency<TDataSeeder>()
+        where TDataSeeder : IDataSeeder
     {
         _dependsOn.Add(typeof(TDataSeeder));
     }
-    
+
     protected void AddDependency(string dataSeederType)
     {
         if (string.IsNullOrWhiteSpace(dataSeederType))
         {
-            throw new ArgumentException("Data seeder type cannot be null or whitespace.", nameof(dataSeederType));
+            throw new ArgumentException(
+                "Data seeder type cannot be null or whitespace.",
+                nameof(dataSeederType)
+            );
         }
 
         var type = Type.GetType(dataSeederType, false);
         if (type == null)
         {
-            throw new InvalidOperationException($"{GetType().Name} depends on {dataSeederType} but this type could not be found");
+            throw new InvalidOperationException(
+                $"{GetType().Name} depends on {dataSeederType} but this type could not be found"
+            );
         }
 
         if (!typeof(IDataSeeder).IsAssignableFrom(type))
         {
-            throw new InvalidOperationException($"{GetType().Name} depends on {dataSeederType} but this type is not an IDataSeeder");
+            throw new InvalidOperationException(
+                $"{GetType().Name} depends on {dataSeederType} but this type is not an IDataSeeder"
+            );
         }
 
         _dependsOn.Add(type);

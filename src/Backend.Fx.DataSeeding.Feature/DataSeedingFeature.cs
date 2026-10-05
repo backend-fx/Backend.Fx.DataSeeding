@@ -17,13 +17,19 @@ public class DataSeedingFeature : IFeature, IBootableFeature
     private readonly IDataSeedingContext _dataSeedingContext;
     private readonly IDataSeedingMutex _mutex;
 
-    public DataSeedingFeature(DataSeedingLevel level = DataSeedingLevel.Production, IDataSeedingMutex? mutex = null)
+    public DataSeedingFeature(
+        DataSeedingLevel level = DataSeedingLevel.Production,
+        IDataSeedingMutex? mutex = null
+    )
     {
         _dataSeedingContext = new DefaultDataSeedingContext(level);
         _mutex = mutex ?? new DataSeedingMutex();
     }
 
-    public DataSeedingFeature(IDataSeedingContext dataSeedingContext, IDataSeedingMutex? mutex = null)
+    public DataSeedingFeature(
+        IDataSeedingContext dataSeedingContext,
+        IDataSeedingMutex? mutex = null
+    )
     {
         _dataSeedingContext = dataSeedingContext;
         _mutex = mutex ?? new DataSeedingMutex();
@@ -31,15 +37,21 @@ public class DataSeedingFeature : IFeature, IBootableFeature
 
     public void Enable(IBackendFxApplication application)
     {
-        _logger.LogInformation("Enabling data seeding for the {ApplicationName}", application.GetType().Name);
-        application.CompositionRoot.RegisterModules(new DataSeedingModule(_mutex, application.Assemblies));
+        _logger.LogInformation(
+            "Enabling data seeding for the {ApplicationName}",
+            application.GetType().Name
+        );
+        application.CompositionRoot.RegisterModules(
+            new DataSeedingModule(_mutex, application.Assemblies)
+        );
     }
 
     public IEnumerable<Assembly> Assemblies => Array.Empty<Assembly>();
 
     public virtual async Task BootAsync(
         IBackendFxApplication application,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         _logger.LogInformation("{ApplicationName} is now seeding data", application.GetType().Name);
         await _dataSeedingContext.SeedAllAsync(application, cancellationToken);

@@ -11,9 +11,13 @@ public abstract class DataSeedingContext : IDataSeedingContext
 {
     private readonly ILogger _logger = Log.Create<DataSeedingContext>();
 
-    public async Task SeedAllAsync(IBackendFxApplication application, CancellationToken cancellationToken = default)
+    public async Task SeedAllAsync(
+        IBackendFxApplication application,
+        CancellationToken cancellationToken = default
+    )
     {
-        var mutex = application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
+        var mutex =
+            application.CompositionRoot.ServiceProvider.GetRequiredService<IDataSeedingMutex>();
         using (mutex.Acquire())
         {
             using (application.UseSingleUserMode())
@@ -22,11 +26,18 @@ public abstract class DataSeedingContext : IDataSeedingContext
 
                 foreach (var seederType in dependencyGraph.GetSortedSeederTypes())
                 {
-                    using (_logger.LogInformationDuration(
-                               $"Invoking seeder {seederType.Name}",
-                               $"Invoking seeder {seederType.Name} done."))
+                    using (
+                        _logger.LogInformationDuration(
+                            $"Invoking seeder {seederType.Name}",
+                            $"Invoking seeder {seederType.Name} done."
+                        )
+                    )
                     {
-                        await RunSeederInSeparateInvocationAsync(application, seederType, cancellationToken);
+                        await RunSeederInSeparateInvocationAsync(
+                            application,
+                            seederType,
+                            cancellationToken
+                        );
                     }
                 }
             }
@@ -36,18 +47,24 @@ public abstract class DataSeedingContext : IDataSeedingContext
     protected abstract Task RunSeederInSeparateInvocationAsync(
         IBackendFxApplication application,
         Type seederType,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken
+    );
 
     protected async Task InvokeSeeder(
         Type seederType,
         IServiceProvider sp,
         DataSeedingLevel seedingLevel,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var dataSeeder = (IDataSeeder)sp.GetRequiredService(seederType);
         if (dataSeeder.Level >= seedingLevel)
         {
-            _logger.LogInformation("Invoking {SeederLevel} seeder {SeederType}", seedingLevel, seederType.Name);
+            _logger.LogInformation(
+                "Invoking {SeederLevel} seeder {SeederType}",
+                seedingLevel,
+                seederType.Name
+            );
             await dataSeeder.SeedAsync(ct);
         }
         else
@@ -56,11 +73,14 @@ public abstract class DataSeedingContext : IDataSeedingContext
                 "Skipping {SeederLevel} seeder {SeederType} because it is not active for level {Level}",
                 dataSeeder.Level,
                 seederType.Name,
-                seedingLevel);
+                seedingLevel
+            );
         }
     }
 
-    private DataSeederDependencyGraph GetDataSeederDependencyGraph(IBackendFxApplication application)
+    private DataSeederDependencyGraph GetDataSeederDependencyGraph(
+        IBackendFxApplication application
+    )
     {
         // Build a dependency graph based on DependsOn property
         using var scope = application.CompositionRoot.BeginScope();

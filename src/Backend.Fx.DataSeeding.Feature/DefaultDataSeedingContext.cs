@@ -15,11 +15,13 @@ public class DefaultDataSeedingContext : DataSeedingContext
     protected override async Task RunSeederInSeparateInvocationAsync(
         IBackendFxApplication application,
         Type seederType,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         await application.Invoker.InvokeAsync(
             async (sp, ct) => await InvokeSeeder(seederType, sp, _level, ct),
             new SystemIdentity(),
-            cancellationToken);
+            cancellationToken
+        );
     }
 }
