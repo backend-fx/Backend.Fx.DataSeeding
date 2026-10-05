@@ -20,7 +20,8 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
         if (TryFindCycle(out var cycle))
         {
             throw new InvalidOperationException(
-                $"Cycle detected in data seeder dependencies: {cycle}. Please check the DependsOn properties of your seeders.");
+                $"Cycle detected in data seeder dependencies: {cycle}. Please check the DependsOn properties of your seeders."
+            );
         }
     }
 
@@ -39,7 +40,8 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
                 if (!seedersByType.TryGetValue(dependency, out var dependencySeeder))
                 {
                     throw new InvalidOperationException(
-                        $"{seeder.GetType().Name} depends on {dependency.Name}, but no such data seeder is registered.");
+                        $"{seeder.GetType().Name} depends on {dependency.Name}, but no such data seeder is registered."
+                    );
                 }
 
                 // A dependency must run at least as often as its dependent. A seeder runs when its
@@ -49,9 +51,10 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
                 if (dependencySeeder.Level < seeder.Level)
                 {
                     throw new InvalidOperationException(
-                        $"{seeder.GetType().Name} (level {seeder.Level}) depends on {dependency.Name} " +
-                        $"(level {dependencySeeder.Level}), but a dependency must run at least as often as its " +
-                        $"dependent. Raise the level of {dependency.Name} to at least {seeder.Level}.");
+                        $"{seeder.GetType().Name} (level {seeder.Level}) depends on {dependency.Name} "
+                            + $"(level {dependencySeeder.Level}), but a dependency must run at least as often as its "
+                            + $"dependent. Raise the level of {dependency.Name} to at least {seeder.Level}."
+                    );
                 }
             }
         }
@@ -110,7 +113,8 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
         HashSet<Type> visited,
         List<Type> stack,
         HashSet<Type> inStack,
-        out string cycle)
+        out string cycle
+    )
     {
         cycle = string.Empty;
         visited.Add(node);
@@ -124,11 +128,17 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
                 if (inStack.Contains(dependent))
                 {
                     var startIndex = stack.IndexOf(dependent);
-                    cycle = string.Join(" -> ", stack.Skip(startIndex).Append(dependent).Select(t => t.Name));
+                    cycle = string.Join(
+                        " -> ",
+                        stack.Skip(startIndex).Append(dependent).Select(t => t.Name)
+                    );
                     return true;
                 }
 
-                if (!visited.Contains(dependent) && TryFindCycle(dependent, visited, stack, inStack, out cycle))
+                if (
+                    !visited.Contains(dependent)
+                    && TryFindCycle(dependent, visited, stack, inStack, out cycle)
+                )
                 {
                     return true;
                 }
@@ -156,10 +166,7 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
         return result.ToArray();
     }
 
-    private void Visit(
-        Type node,
-        HashSet<Type> visited,
-        List<Type> result)
+    private void Visit(Type node, HashSet<Type> visited, List<Type> result)
     {
         if (visited.Add(node))
         {
@@ -199,7 +206,9 @@ public class DataSeederDependencyGraph : IReadOnlyDictionary<Type, HashSet<Type>
 
     public HashSet<Type> this[Type key] => _dependencyGraph[key];
 
-    public IEnumerable<Type> Keys => ((IReadOnlyDictionary<Type, HashSet<Type>>)_dependencyGraph).Keys;
+    public IEnumerable<Type> Keys =>
+        ((IReadOnlyDictionary<Type, HashSet<Type>>)_dependencyGraph).Keys;
 
-    public IEnumerable<HashSet<Type>> Values => ((IReadOnlyDictionary<Type, HashSet<Type>>)_dependencyGraph).Values;
+    public IEnumerable<HashSet<Type>> Values =>
+        ((IReadOnlyDictionary<Type, HashSet<Type>>)_dependencyGraph).Values;
 }

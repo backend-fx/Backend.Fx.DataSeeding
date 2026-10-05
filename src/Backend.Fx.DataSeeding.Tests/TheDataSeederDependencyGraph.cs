@@ -18,8 +18,9 @@ public class TheDataSeederDependencyGraph
                 new RootSeeder(invocations),
                 new Dep2Seeder(invocations),
                 new Dep1SeederA(invocations),
-                new Dep1SeederB(invocations)
-            });
+                new Dep1SeederB(invocations),
+            }
+        );
 
         var sorted = sut.GetSortedSeederTypes();
 
@@ -35,13 +36,16 @@ public class TheDataSeederDependencyGraph
     {
         var invocations = new List<Type>();
 
-        var exception = Record.Exception(() => new DataSeederDependencyGraph(
-            new IDataSeeder[]
-            {
-                new CyclicSeeder1(invocations),
-                new CyclicSeeder2(invocations),
-                new CyclicSeeder3(invocations),
-            }));
+        var exception = Record.Exception(() =>
+            new DataSeederDependencyGraph(
+                new IDataSeeder[]
+                {
+                    new CyclicSeeder1(invocations),
+                    new CyclicSeeder2(invocations),
+                    new CyclicSeeder3(invocations),
+                }
+            )
+        );
         Assert.NotNull(exception);
         Assert.IsType<InvalidOperationException>(exception);
     }
@@ -51,11 +55,11 @@ public class TheDataSeederDependencyGraph
     {
         var invocations = new List<Type>();
 
-        var exception = Record.Exception(() => new DataSeederDependencyGraph(
-            new IDataSeeder[]
-            {
-                new DependsOnUnregisteredSeeder(invocations),
-            }));
+        var exception = Record.Exception(() =>
+            new DataSeederDependencyGraph(
+                new IDataSeeder[] { new DependsOnUnregisteredSeeder(invocations) }
+            )
+        );
 
         Assert.IsType<InvalidOperationException>(exception);
         Assert.Contains(nameof(IsolatedSeeder1), exception!.Message);
@@ -66,12 +70,15 @@ public class TheDataSeederDependencyGraph
     {
         var invocations = new List<Type>();
 
-        var exception = Record.Exception(() => new DataSeederDependencyGraph(
-            new IDataSeeder[]
-            {
-                new ProductionDependent(invocations),
-                new DemonstrationDependency(invocations),
-            }));
+        var exception = Record.Exception(() =>
+            new DataSeederDependencyGraph(
+                new IDataSeeder[]
+                {
+                    new ProductionDependent(invocations),
+                    new DemonstrationDependency(invocations),
+                }
+            )
+        );
 
         Assert.IsType<InvalidOperationException>(exception);
     }
@@ -81,12 +88,15 @@ public class TheDataSeederDependencyGraph
     {
         var invocations = new List<Type>();
 
-        var exception = Record.Exception(() => new DataSeederDependencyGraph(
-            new IDataSeeder[]
-            {
-                new DemonstrationDependent(invocations),
-                new ProductionDependency(invocations),
-            }));
+        var exception = Record.Exception(() =>
+            new DataSeederDependencyGraph(
+                new IDataSeeder[]
+                {
+                    new DemonstrationDependent(invocations),
+                    new ProductionDependency(invocations),
+                }
+            )
+        );
 
         Assert.Null(exception);
     }
@@ -96,10 +106,8 @@ public class TheDataSeederDependencyGraph
     {
         var invocations = new List<Type>();
         var sut = new DataSeederDependencyGraph(
-            new IDataSeeder[]
-            {
-                new IsolatedSeeder1(invocations),
-            });
+            new IDataSeeder[] { new IsolatedSeeder1(invocations) }
+        );
 
         var sorted = sut.GetSortedSeederTypes();
         Assert.Single(sorted);
@@ -110,11 +118,8 @@ public class TheDataSeederDependencyGraph
     {
         var invocations = new List<Type>();
         var sut = new DataSeederDependencyGraph(
-            new IDataSeeder[]
-            {
-                new IsolatedSeeder1(invocations),
-                new IsolatedSeeder2(invocations),
-            });
+            new IDataSeeder[] { new IsolatedSeeder1(invocations), new IsolatedSeeder2(invocations) }
+        );
 
         var sorted = sut.GetSortedSeederTypes();
         Assert.Equal(2, sorted.Length);
@@ -126,7 +131,8 @@ public class TheDataSeederDependencyGraph
 
     private class DependsOnUnregisteredSeeder : TestSeeder
     {
-        public DependsOnUnregisteredSeeder(IList<Type> invocations) : base(invocations)
+        public DependsOnUnregisteredSeeder(IList<Type> invocations)
+            : base(invocations)
         {
             AddDependency<IsolatedSeeder1>();
         }
@@ -139,7 +145,8 @@ public class TheDataSeederDependencyGraph
 
     private class ProductionDependent : TestSeeder
     {
-        public ProductionDependent(IList<Type> invocations) : base(invocations)
+        public ProductionDependent(IList<Type> invocations)
+            : base(invocations)
         {
             AddDependency<DemonstrationDependency>();
         }
@@ -154,7 +161,8 @@ public class TheDataSeederDependencyGraph
 
     private class DemonstrationDependent : TestSeeder
     {
-        public DemonstrationDependent(IList<Type> invocations) : base(invocations)
+        public DemonstrationDependent(IList<Type> invocations)
+            : base(invocations)
         {
             AddDependency<ProductionDependency>();
         }
@@ -164,16 +172,17 @@ public class TheDataSeederDependencyGraph
 
     private class CyclicSeeder1 : TestSeeder
     {
-        public CyclicSeeder1(IList<Type> invocations) : base(invocations)
+        public CyclicSeeder1(IList<Type> invocations)
+            : base(invocations)
         {
             AddDependency<CyclicSeeder2>();
         }
     }
 
-
     private class CyclicSeeder2 : TestSeeder
     {
-        public CyclicSeeder2(IList<Type> invocations) : base(invocations)
+        public CyclicSeeder2(IList<Type> invocations)
+            : base(invocations)
         {
             AddDependency<CyclicSeeder3>();
         }
@@ -181,7 +190,8 @@ public class TheDataSeederDependencyGraph
 
     private class CyclicSeeder3 : TestSeeder
     {
-        public CyclicSeeder3(IList<Type> invocations) : base(invocations)
+        public CyclicSeeder3(IList<Type> invocations)
+            : base(invocations)
         {
             AddDependency<CyclicSeeder1>();
         }

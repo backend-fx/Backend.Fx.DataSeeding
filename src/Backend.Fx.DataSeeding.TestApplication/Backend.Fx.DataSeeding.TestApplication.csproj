@@ -1,20 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <LangVersion>12</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <LangVersion>12</LangVersion>
-        <IsPackable>false</IsPackable>
-    </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Backend.Fx.Execution" Version="1.1.11" />
+    <PackageReference Include="Backend.Fx.Execution.SimpleInjector" Version="1.1.8" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Backend.Fx.Execution" Version="1.1.11" />
-        <PackageReference Include="Backend.Fx.Execution.SimpleInjector" Version="1.1.8" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\src\Backend.Fx.DataSeeding\Backend.Fx.DataSeeding.csproj" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Backend.Fx.DataSeeding\Backend.Fx.DataSeeding.csproj" />
+  </ItemGroup>
 </Project>
